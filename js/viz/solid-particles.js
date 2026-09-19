@@ -213,8 +213,12 @@ export function showParticleSolid(assignment, modeResult) {
   visible = true;
   containerEl?.classList.remove("hidden");
   if (titleEl) titleEl.textContent = modeResult?.title || "Sólido de revolución";
-  morphSolid(assignment, modeResult);
-  onResize();
+  // Esperar un frame para que el contenedor tenga tamaño real al salir de .hidden
+  requestAnimationFrame(() => {
+    morphSolid(assignment, modeResult);
+    onResize();
+    if (renderer && scene && camera) renderer.render(scene, camera);
+  });
 }
 
 export function hideParticleSolid() {

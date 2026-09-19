@@ -82,7 +82,8 @@
 }
 
 .plot-frame {
-  min-height: 360px;
+  min-height: 380px;
+  height: min(52vh, 520px);
   background: linear-gradient(180deg, #fff, var(--cream));
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
