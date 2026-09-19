@@ -83,7 +83,6 @@ export function showPlotForMode(mode, assignment, modeResult) {
   if (needs3d) {
     plot2d.classList.add("hidden");
     plot3d.classList.remove("hidden");
-    hideParticleSolid(); // ensure clean call before show in showPlotForMode
     showParticleSolid(assignment, modeResult);
   } else {
     hideParticleSolid();
