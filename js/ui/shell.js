@@ -1,11 +1,27 @@
 import { MODES } from "../math/index.js";
 
-export function bindShell({ theme, assignment, onMode, onStartCamera, onSkipCamera, onReset, onToggleExplain }) {
+const STORAGE_KEY = "cim-assignment-v1";
+
+export function bindShell({
+  theme,
+  assignment,
+  onMode,
+  onStartCamera,
+  onSkipCamera,
+  onReset,
+  onToggleExplain,
+  onApplyAssignment,
+}) {
   document.getElementById("product-name").textContent = theme.productName;
   document.getElementById("product-tagline").textContent = theme.tagline;
   document.getElementById("welcome-title").textContent = theme.welcomeTitle || "Bienvenida";
   document.getElementById("welcome-body").textContent = theme.welcomeBody;
   document.title = `${theme.productName} — Cálculo Integral`;
+
+  const teamLine = document.getElementById("team-line");
+  if (teamLine && theme.team?.length) {
+    teamLine.textContent = theme.team.join(" · ");
+  }
 
   const team = document.getElementById("team-list");
   team.innerHTML = "";
@@ -16,13 +32,14 @@ export function bindShell({ theme, assignment, onMode, onStartCamera, onSkipCame
     team.appendChild(span);
   });
 
-  document.getElementById("fn-display").textContent =
-    assignment.displayLatex || `f(x) = ${assignment.functionExpression}`;
-  document.getElementById("interval-display").textContent =
-    `[${assignment.interval.a}, ${assignment.interval.b}]`;
-  document.getElementById("axis-display").textContent =
-    assignment.axis === "y" ? "eje y" : "eje x";
+  fillAssignmentForm(assignment);
   document.getElementById("notes-display").textContent = assignment.notes || "";
+
+  document.getElementById("assignment-form")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const next = readAssignmentForm(assignment);
+    onApplyAssignment?.(next);
+  });
 
   document.querySelectorAll("[data-mode]").forEach((btn) => {
     btn.addEventListener("click", () => onMode(Number(btn.dataset.mode)));
@@ -35,11 +52,64 @@ export function bindShell({ theme, assignment, onMode, onStartCamera, onSkipCame
   document.getElementById("btn-explain")?.addEventListener("click", onToggleExplain);
 
   window.addEventListener("keydown", (e) => {
-    if (e.target.matches("input, textarea")) return;
+    if (e.target.matches("input, textarea, select")) return;
     const n = Number(e.key);
     if (n >= 1 && n <= 5) onMode(n);
     if (e.key === "r" || e.key === "R") onReset();
   });
+}
+
+export function fillAssignmentForm(assignment) {
+  const fn = document.getElementById("input-fn");
+  const a = document.getElementById("input-a");
+  const b = document.getElementById("input-b");
+  const axis = document.getElementById("input-axis");
+  if (!fn) return;
+  fn.value = assignment.functionExpression || "";
+  a.value = assignment.interval?.a ?? "";
+  b.value = assignment.interval?.b ?? "";
+  axis.value = assignment.axis === "y" ? "y" : "x";
+}
+
+export function readAssignmentForm(base) {
+  const fn = document.getElementById("input-fn").value.trim();
+  const a = Number(document.getElementById("input-a").value);
+  const b = Number(document.getElementById("input-b").value);
+  const axis = document.getElementById("input-axis").value === "y" ? "y" : "x";
+  if (!fn) throw new Error("Escribe la función f(x).");
+  if (!Number.isFinite(a) || !Number.isFinite(b)) {
+    throw new Error("a y b deben ser números.");
+  }
+  if (!(b > a)) throw new Error("Debe cumplirse b > a.");
+
+  return {
+    ...base,
+    functionExpression: fn,
+    displayLatex: `f(x) = ${fn}`,
+    interval: { a, b },
+    axis,
+    notes: "Problema cargado para la demo. Puedes editarlo cuando la docente lo asigne.",
+  };
+}
+
+export function saveAssignmentLocal(assignment) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(assignment));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function loadAssignmentLocal(fallback) {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    if (!parsed?.functionExpression || !parsed?.interval) return fallback;
+    return { ...fallback, ...parsed };
+  } catch {
+    return fallback;
+  }
 }
 
 export function setActiveMode(mode) {

@@ -2,9 +2,9 @@
   "id": "greicy",
   "productName": "Cálculo en Movimiento",
   "tagline": "Explora integrales con la mano: área, volumen, superficie y arco",
-  "team": ["Greicy", "Integrante 2", "Integrante 3"],
+  "team": ["Greicy Martinez", "Mariana Quiroga", "Miluska Mancera"],
   "welcomeTitle": "Bienvenida",
-  "welcomeBody": "Activa la cámara o usa los botones 1–5. Cada gesto calcula un concepto de cálculo integral sobre la función asignada.",
+  "welcomeBody": "Equipo: Greicy Martinez, Mariana Quiroga y Miluska Mancera. Activa la cámara o usa los botones 1–5. Cada gesto calcula un concepto de cálculo integral sobre la función que asigne la docente.",
   "layout": "split",
   "vizStyle": "clean",
   "fonts": {

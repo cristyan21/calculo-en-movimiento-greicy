@@ -28,9 +28,10 @@
   <div class="app-shell">
     <header class="app-header">
       <div class="brand">
-        <div class="brand-kicker">Equipo Greicy</div>
+        <div class="brand-kicker" id="brand-kicker">Equipo Greicy</div>
         <h1 id="product-name">Cálculo en Movimiento</h1>
         <p id="product-tagline">Explora integrales con la mano</p>
+        <p class="result-note" id="team-line" style="margin-top:0.25rem"></p>
       </div>
       <div class="header-actions">
         <button type="button" class="btn btn-primary" id="btn-camera">Activar cámara</button>
@@ -48,21 +49,32 @@
       <aside class="panel side-stack">
         <section>
           <h2>Problema asignado</h2>
-          <dl class="kv">
-            <div>
-              <dt>Función</dt>
-              <dd class="math" id="fn-display">f(x)</dd>
+          <form id="assignment-form" class="field-grid" autocomplete="off">
+            <label>
+              Función f(x)
+              <input id="input-fn" name="fn" type="text" spellcheck="false" placeholder="ej. x^2  o  sin(x)" />
+            </label>
+            <div class="field-row">
+              <label>
+                a
+                <input id="input-a" name="a" type="number" step="any" />
+              </label>
+              <label>
+                b
+                <input id="input-b" name="b" type="number" step="any" />
+              </label>
             </div>
-            <div>
-              <dt>Intervalo [a, b]</dt>
-              <dd id="interval-display">[a, b]</dd>
-            </div>
-            <div>
-              <dt>Eje de revolución</dt>
-              <dd id="axis-display">eje x</dd>
-            </div>
-          </dl>
+            <label>
+              Eje de revolución
+              <select id="input-axis" name="axis">
+                <option value="x">eje x</option>
+                <option value="y">eje y</option>
+              </select>
+            </label>
+            <button type="submit" class="btn btn-primary" id="btn-apply-assignment">Aplicar problema</button>
+          </form>
           <p class="result-note" id="notes-display" style="margin-top:0.6rem"></p>
+          <p class="result-note">El día de la entrega escribe aquí lo que asigne la docente y pulsa <strong>Aplicar problema</strong>.</p>
         </section>
 
         <section>
@@ -81,9 +93,9 @@
         <section>
           <h2>Cómo usarlo</h2>
           <ul class="instructions">
-            <li>Observa la función y el intervalo asignados.</li>
-            <li>Activa la cámara y muestra 1 a 5 dedos.</li>
-            <li>Lee la fórmula, el valor y las unidades.</li>
+            <li>Ingresa la función, [a, b] y el eje; pulsa Aplicar.</li>
+            <li>Activa la cámara, muestra solo la mano y <strong>sostén</strong> 1–5 dedos ~1 s.</li>
+            <li>Para cambiar de gesto: puño o sostén el nuevo número.</li>
             <li>Si la cámara falla, usa los botones.</li>
           </ul>
         </section>
@@ -106,6 +118,12 @@
             <div id="camera-placeholder" class="camera-placeholder">
               Cámara en espera.<br />Pulsa “Activar cámara”.
             </div>
+          </div>
+          <div class="camera-tips">
+            <strong>Tips de cámara</strong>
+            <span>• Solo la mano en cuadro (aleja la cara).</span>
+            <span>• Palma hacia la cámara, dedos bien abiertos.</span>
+            <span>• Sostén el gesto ~1 s; para cambiar: puño o nuevo gesto.</span>
           </div>
         </section>
 

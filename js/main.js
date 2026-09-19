@@ -3,7 +3,15 @@ import { runMode, MODES, sampleCurve } from "./math/index.js";
 import { runMathChecks } from "./math/__checks.js";
 import { showPlotForMode, renderPlot2D } from "./viz/plot-2d.js";
 import { createGestureEngine } from "./gesture-engine.js";
-import { bindShell, setActiveMode, hideWelcome, showToast } from "./ui/shell.js";
+import {
+  bindShell,
+  setActiveMode,
+  hideWelcome,
+  showToast,
+  fillAssignmentForm,
+  loadAssignmentLocal,
+  saveAssignmentLocal,
+} from "./ui/shell.js";
 import { renderResults, clearResults } from "./ui/results.js";
 import { setExplainMode, updateExplainForMode } from "./ui/instructions.js";
 
@@ -28,14 +36,39 @@ function applyMode(mode, source = "manual") {
     updateExplainForMode(mode, explainOn);
     showToast(
       source === "gesture"
-        ? `Gesto: ${mode} → ${MODES[mode].short}`
+        ? `Gesto confirmado: ${mode} → ${MODES[mode].short}`
         : `Modo ${mode}: ${MODES[mode].short}`
     );
-    setStatus(`Modo activo: ${MODES[mode].short}`);
+    if (source === "manual") {
+      setStatus(`Modo activo: ${MODES[mode].short}`);
+    }
   } catch (err) {
     console.error(err);
     showToast(err.message || "Error en el cálculo");
     setStatus(err.message || "Error en el cálculo");
+  }
+}
+
+function applyAssignment(next) {
+  try {
+    sampleCurve(next, 10);
+    assignment = next;
+    saveAssignmentLocal(assignment);
+    document.getElementById("notes-display").textContent = assignment.notes || "";
+    fillAssignmentForm(assignment);
+    gestureEngine?.resetStability();
+    if (currentMode) {
+      applyMode(currentMode, "manual");
+    } else {
+      renderPlot2D(assignment, null, "plot2d");
+      document.getElementById("plot3d").classList.add("hidden");
+      document.getElementById("plot2d").classList.remove("hidden");
+    }
+    showToast("Problema aplicado");
+    setStatus(`f(x)=${assignment.functionExpression} en [${assignment.interval.a}, ${assignment.interval.b}]`);
+  } catch (err) {
+    console.error(err);
+    showToast(err.message || "No se pudo aplicar el problema");
   }
 }
 
@@ -50,7 +83,7 @@ function resetApp() {
   renderPlot2D(assignment, null, "plot2d");
   document.getElementById("plot3d").classList.add("hidden");
   document.getElementById("plot2d").classList.remove("hidden");
-  setStatus("Reiniciado — elige 1 a 5");
+  setStatus("Reiniciado — elige 1 a 5 (sostén el gesto ~1 s)");
   showToast("Aplicación reiniciada");
 }
 
@@ -59,7 +92,7 @@ async function startCamera() {
   const video = document.getElementById("webcam");
   try {
     await gestureEngine.start(video);
-    showToast("Cámara activada");
+    showToast("Cámara activada — sostén el gesto 1 segundo");
   } catch (err) {
     console.error(err);
     showToast("Sin cámara — usa botones 1–5");
@@ -77,10 +110,9 @@ function skipCamera() {
 async function boot() {
   const cfg = await loadConfig();
   theme = cfg.theme;
-  assignment = cfg.assignment;
+  assignment = loadAssignmentLocal(cfg.assignment);
   applyTheme(theme);
 
-  // Warm sample to validate expression early
   sampleCurve(assignment, 10);
 
   gestureEngine = createGestureEngine({
@@ -95,6 +127,7 @@ async function boot() {
     onStartCamera: startCamera,
     onSkipCamera: skipCamera,
     onReset: resetApp,
+    onApplyAssignment: applyAssignment,
     onToggleExplain: () => {
       explainOn = !explainOn;
       setExplainMode(explainOn, currentMode || 1);
@@ -116,7 +149,7 @@ async function boot() {
     console.info("Autopruebas matemáticas OK");
   }
 
-  setStatus("Listo — activa la cámara o usa 1–5");
+  setStatus("Listo — aplica el problema y usa cámara o 1–5");
 }
 
 boot().catch((err) => {

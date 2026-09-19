@@ -252,3 +252,54 @@
 .toast.show {
   opacity: 1;
 }
+
+.field-grid {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.field-grid label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.field-grid input,
+.field-grid select {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.55rem 0.7rem;
+  background: #fff;
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.field-grid input:focus,
+.field-grid select:focus {
+  outline: 2px solid color-mix(in srgb, var(--accent) 45%, white);
+  border-color: var(--accent);
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.camera-tips {
+  margin-top: 0.55rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  display: grid;
+  gap: 0.2rem;
+}
+
+.camera-tips strong {
+  color: var(--ink);
+}

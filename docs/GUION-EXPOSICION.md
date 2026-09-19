@@ -6,9 +6,9 @@ Equipo sugerido: 3 integrantes. Todas deben poder explicar el gesto que demuestr
 
 | Integrante | Momento | Qué dice / hace |
 |-----------|---------|-----------------|
-| A (Matemática) | Problema + gestos 1 y 5 | Función, intervalo, área y arco |
-| B (Interfaz) | Inicio + demo de uso | Bienvenida, cámara/botones, modo explicar |
-| C (Integración) | Gestos 2–4 | Volúmenes y superficie + enlace Pages |
+| A (Matemática) — Greicy Martinez | Problema + gestos 1 y 5 | Función, intervalo, área y arco |
+| B (Interfaz) — Mariana Quiroga | Inicio + demo de uso | Bienvenida, cámara/botones, modo explicar |
+| C (Integración) — Miluska Mancera | Gestos 2–4 | Volúmenes y superficie + enlace Pages |
 
 ## Guion
 
