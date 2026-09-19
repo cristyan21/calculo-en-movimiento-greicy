@@ -5,9 +5,11 @@ import { sampleCurve } from "../math/index.js";
  * driven by the assigned f(x) and [a,b], Greicy palette.
  */
 const N = 14000;
+const ROT_SPEED = 0.014; // un poco más rápido que antes (0.006)
 
 let ready = false;
 let scene, camera, renderer, points, geo, mat;
+let axisGroup = null;
 let pos, tgt, col, tcol;
 let animId = 0;
 let containerEl = null;
@@ -28,6 +30,78 @@ function mkCircleTex() {
   cx.arc(64, 64, 60, 0, Math.PI * 2);
   cx.fill();
   return new THREE.CanvasTexture(c);
+}
+
+function makeAxisLabel(text, color) {
+  const c = document.createElement("canvas");
+  c.width = 128;
+  c.height = 64;
+  const ctx = c.getContext("2d");
+  ctx.clearRect(0, 0, 128, 64);
+  ctx.font = "600 36px Nunito, Segoe UI, sans-serif";
+  ctx.fillStyle = color;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.globalAlpha = 0.55;
+  ctx.fillText(text, 64, 32);
+  const tex = new THREE.CanvasTexture(c);
+  const matSprite = new THREE.SpriteMaterial({
+    map: tex,
+    transparent: true,
+    depthWrite: false,
+    opacity: 0.7,
+  });
+  const sprite = new THREE.Sprite(matSprite);
+  sprite.scale.set(0.9, 0.45, 1);
+  return sprite;
+}
+
+function makeWatermarkAxes(length = 4.2) {
+  const group = new THREE.Group();
+  group.name = "watermark-axes";
+
+  const mkLine = (to, colorHex) => {
+    const geoLine = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, 0, 0),
+      to,
+    ]);
+    const matLine = new THREE.LineBasicMaterial({
+      color: colorHex,
+      transparent: true,
+      opacity: 0.28,
+      depthWrite: false,
+    });
+    return new THREE.Line(geoLine, matLine);
+  };
+
+  // Ejes sutiles (marca de agua)
+  group.add(mkLine(new THREE.Vector3(length, 0, 0), 0xffb7c9)); // x
+  group.add(mkLine(new THREE.Vector3(0, length, 0), 0xc9b6e4)); // y
+  group.add(mkLine(new THREE.Vector3(0, 0, length), 0xa8d4ff)); // z
+  group.add(mkLine(new THREE.Vector3(-length * 0.35, 0, 0), 0xffb7c9));
+  group.add(mkLine(new THREE.Vector3(0, -length * 0.2, 0), 0xc9b6e4));
+  group.add(mkLine(new THREE.Vector3(0, 0, -length * 0.35), 0xa8d4ff));
+
+  // Rejilla suave en plano XZ
+  const grid = new THREE.GridHelper(length * 1.6, 8, 0xffffff, 0xffffff);
+  grid.material.transparent = true;
+  grid.material.opacity = 0.07;
+  grid.material.depthWrite = false;
+  group.add(grid);
+
+  const lx = makeAxisLabel("x", "rgba(255,200,220,0.95)");
+  lx.position.set(length + 0.35, 0.05, 0);
+  group.add(lx);
+
+  const ly = makeAxisLabel("y", "rgba(220,200,255,0.95)");
+  ly.position.set(0.1, length + 0.35, 0);
+  group.add(ly);
+
+  const lz = makeAxisLabel("z", "rgba(180,220,255,0.95)");
+  lz.position.set(0, 0.05, length + 0.35);
+  group.add(lz);
+
+  return group;
 }
 
 function setCol(i, c) {
@@ -94,6 +168,9 @@ function ensureInit(containerId = "plot3d") {
   points = new THREE.Points(geo, mat);
   scene.add(points);
 
+  axisGroup = makeWatermarkAxes(4.2);
+  scene.add(axisGroup);
+
   window.addEventListener("resize", onResize);
   ready = true;
   animate();
@@ -126,9 +203,10 @@ function animate() {
   colAttr.needsUpdate = true;
 
   if (visible) {
-    rotY += 0.006;
+    rotY += ROT_SPEED;
     points.rotation.y = rotY;
     points.rotation.x = Math.sin(rotY * 0.35) * 0.12;
+    // Ejes fijos (marca de agua): no rotan con el sólido
     renderer.render(scene, camera);
   }
 }
@@ -169,21 +247,18 @@ function morphSolid(assignment, modeResult) {
     let pz;
 
     if (mode === "volume_y") {
-      // Capas: disco horizontal a altura y=f(x) con radio |x|
       const R = Math.abs(x);
       const rr = R * Math.sqrt(Math.random());
       px = rr * Math.cos(theta);
       py = fx;
       pz = rr * Math.sin(theta);
     } else if (mode === "surface") {
-      // Cáscara cerca de |f(x)| girando en x
       const R = Math.abs(fx);
       const rr = R * (0.94 + 0.06 * Math.random());
       px = x;
       py = rr * Math.cos(theta);
       pz = rr * Math.sin(theta);
     } else {
-      // Volumen eje x (discos): relleno del disco de radio |f(x)|
       const R = Math.abs(fx);
       const rr = R * Math.sqrt(Math.random());
       px = x;
@@ -192,14 +267,13 @@ function morphSolid(assignment, modeResult) {
     }
 
     tgt[i * 3] = (px - (mode === "volume_y" ? 0 : xMid)) * scale;
-    tgt[i * 3 + 1] = py * scale * (mode === "volume_y" ? 1 : 1);
+    tgt[i * 3 + 1] = py * scale;
     tgt[i * 3 + 2] = pz * scale;
 
     const shade =
       mode === "volume_y"
         ? Math.min(1, Math.hypot(px, pz) / (maxR || 1))
         : Math.min(1, Math.hypot(py, pz) / (maxR || 1));
-    // blush → lavender
     C.setHSL(0.92 - shade * 0.2, 0.58, 0.52 + shade * 0.18);
     setCol(i, C);
   }
@@ -213,7 +287,6 @@ export function showParticleSolid(assignment, modeResult) {
   visible = true;
   containerEl?.classList.remove("hidden");
   if (titleEl) titleEl.textContent = modeResult?.title || "Sólido de revolución";
-  // Esperar un frame para que el contenedor tenga tamaño real al salir de .hidden
   requestAnimationFrame(() => {
     morphSolid(assignment, modeResult);
     onResize();
