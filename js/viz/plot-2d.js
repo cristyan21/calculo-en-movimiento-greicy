@@ -1,4 +1,5 @@
 import { sampleCurve } from "../math/index.js";
+import { showParticleSolid, hideParticleSolid } from "./solid-particles.js";
 
 function cssVar(name, fallback) {
   const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -73,82 +74,6 @@ export function renderPlot2D(assignment, modeResult, targetId = "plot2d") {
   });
 }
 
-export function renderPlot3D(assignment, modeResult, targetId = "plot3d") {
-  const { xs, ys, a, b, f } = sampleCurve(assignment, 50);
-  const aroundY = modeResult?.mode === "volume_y";
-  const isSurface = modeResult?.mode === "surface";
-
-  // Build surface of revolution about x (default) or suggest about y for volume_y
-  const thetaSteps = 36;
-  const xSurf = [];
-  const ySurf = [];
-  const zSurf = [];
-
-  for (let i = 0; i < xs.length; i++) {
-    const x = xs[i];
-    const r = Math.abs(ys[i]);
-    const rowX = [];
-    const rowY = [];
-    const rowZ = [];
-    for (let j = 0; j <= thetaSteps; j++) {
-      const th = (j / thetaSteps) * Math.PI * 2;
-      if (aroundY) {
-        // revolve around y: treat y as axis, radius = x
-        const radius = Math.abs(x);
-        rowX.push(radius * Math.cos(th));
-        rowY.push(f(x));
-        rowZ.push(radius * Math.sin(th));
-      } else {
-        rowX.push(x);
-        rowY.push(r * Math.cos(th));
-        rowZ.push(r * Math.sin(th));
-      }
-    }
-    xSurf.push(rowX);
-    ySurf.push(rowY);
-    zSurf.push(rowZ);
-  }
-
-  const color = cssVar("--blush-deep", "#d4789a");
-  const opacity = isSurface ? 0.55 : 0.75;
-
-  const data = [
-    {
-      type: "surface",
-      x: xSurf,
-      y: ySurf,
-      z: zSurf,
-      showscale: false,
-      opacity,
-      colorscale: [
-        [0, "#fff4ea"],
-        [0.5, color],
-        [1, "#9b7bb8"],
-      ],
-    },
-  ];
-
-  const layout = {
-    margin: { l: 0, r: 0, t: 30, b: 0 },
-    paper_bgcolor: "rgba(0,0,0,0)",
-    title: {
-      text: modeResult?.title || "Sólido 3D",
-      font: { size: 14 },
-    },
-    scene: {
-      xaxis: { title: "x" },
-      yaxis: { title: aroundY ? "y" : "y" },
-      zaxis: { title: "z" },
-      aspectmode: "data",
-    },
-  };
-
-  window.Plotly.react(targetId, data, layout, {
-    displayModeBar: false,
-    responsive: true,
-  });
-}
-
 export function showPlotForMode(mode, assignment, modeResult) {
   const plot2d = document.getElementById("plot2d");
   const plot3d = document.getElementById("plot3d");
@@ -158,8 +83,10 @@ export function showPlotForMode(mode, assignment, modeResult) {
   if (needs3d) {
     plot2d.classList.add("hidden");
     plot3d.classList.remove("hidden");
-    renderPlot3D(assignment, modeResult, "plot3d");
+    hideParticleSolid(); // ensure clean call before show in showPlotForMode
+    showParticleSolid(assignment, modeResult);
   } else {
+    hideParticleSolid();
     plot3d.classList.add("hidden");
     plot2d.classList.remove("hidden");
     renderPlot2D(assignment, modeResult, "plot2d");

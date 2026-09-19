@@ -2,6 +2,7 @@ import { loadConfig, applyTheme } from "./config-loader.js";
 import { runMode, MODES, sampleCurve } from "./math/index.js";
 import { runMathChecks } from "./math/__checks.js";
 import { showPlotForMode, renderPlot2D } from "./viz/plot-2d.js";
+import { hideParticleSolid } from "./viz/solid-particles.js";
 import { createGestureEngine } from "./gesture-engine.js";
 import {
   bindShell,
@@ -60,6 +61,7 @@ function applyAssignment(next) {
     if (currentMode) {
       applyMode(currentMode, "manual");
     } else {
+      hideParticleSolid();
       renderPlot2D(assignment, null, "plot2d");
       document.getElementById("plot3d").classList.add("hidden");
       document.getElementById("plot2d").classList.remove("hidden");
@@ -80,10 +82,11 @@ function resetApp() {
   chip.textContent = "Esperando gesto o botón";
   chip.classList.remove("ok");
   gestureEngine?.resetStability();
+  hideParticleSolid();
   renderPlot2D(assignment, null, "plot2d");
   document.getElementById("plot3d").classList.add("hidden");
   document.getElementById("plot2d").classList.remove("hidden");
-  setStatus("Reiniciado — elige 1 a 5 (sostén el gesto ~1 s)");
+  setStatus("Reiniciado — elige 1 a 5 (sostén el gesto 1.5 s)");
   showToast("Aplicación reiniciada");
 }
 
