@@ -1,0 +1,36 @@
+{
+  "id": "plantilla",
+  "productName": "Integral Interactiva",
+  "tagline": "Aprende cálculo integral con gestos y visualizaciones claras",
+  "team": ["Nombre 1", "Nombre 2", "Nombre 3"],
+  "welcomeTitle": "Comenzar",
+  "welcomeBody": "Usa la cámara (dedos 1–5) o los botones. El programa muestra la integral, el resultado y las unidades.",
+  "layout": "focus-graph",
+  "vizStyle": "clean",
+  "fonts": {
+    "display": "\"DM Sans\", \"Segoe UI\", sans-serif",
+    "body": "\"DM Sans\", \"Segoe UI\", sans-serif",
+    "math": "\"Cambria Math\", \"Times New Roman\", serif"
+  },
+  "colors": {
+    "--bg": "#f4f7fb",
+    "--bg-soft": "#eef3f9",
+    "--surface": "#ffffff",
+    "--ink": "#243447",
+    "--muted": "#5c6b7a",
+    "--blush": "#7eb8d4",
+    "--blush-deep": "#3d8fb5",
+    "--lavender": "#8aa4c8",
+    "--cream": "#f0f6fa",
+    "--rose-gold": "#6a8fa8",
+    "--accent": "#3d8fb5",
+    "--accent-2": "#5b7c99",
+    "--success": "#3d9a78",
+    "--danger": "#c45c6a",
+    "--border": "rgba(61, 143, 181, 0.22)",
+    "--shadow": "rgba(36, 52, 71, 0.08)",
+    "--plot-fill": "rgba(61, 143, 181, 0.32)",
+    "--plot-line": "#3d8fb5",
+    "--plot-arc": "#5b7c99"
+  }
+}

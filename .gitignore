@@ -1,0 +1,12 @@
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/
+node_modules/
+_ref-particulas/
+_chatgpt*
+_extract*
+*.tmp
+.env
+.env.*

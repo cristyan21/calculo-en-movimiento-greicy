@@ -1,0 +1,15 @@
+{
+  "title": "Problema asignado",
+  "functionExpression": "x^2",
+  "interval": { "a": 0, "b": 2 },
+  "axis": "x",
+  "units": {
+    "area": "u²",
+    "volume": "u³",
+    "surface": "u²",
+    "arc": "u"
+  },
+  "notes": "Ejemplo editable. Reemplazar cuando la docente asigne la función, el intervalo y el eje.",
+  "displayLatex": "f(x) = x^{2}",
+  "nIntervals": 800
+}

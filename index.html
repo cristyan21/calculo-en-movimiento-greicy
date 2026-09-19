@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cálculo en Movimiento</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+</head>
+<body class="layout-split">
+  <div id="welcome-overlay" class="welcome-overlay">
+    <div class="welcome-card">
+      <p class="brand-kicker">Proyecto de aula · Cálculo integral</p>
+      <h2 id="welcome-title">Bienvenida</h2>
+      <p id="welcome-body">Activa la cámara o usa los botones 1–5.</p>
+      <div id="team-list" class="team-list"></div>
+      <div class="welcome-actions">
+        <button type="button" class="btn btn-primary" id="btn-start-camera">Activar cámara</button>
+        <button type="button" class="btn btn-secondary" id="btn-skip-camera">Continuar sin cámara</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-kicker">Equipo Greicy</div>
+        <h1 id="product-name">Cálculo en Movimiento</h1>
+        <p id="product-tagline">Explora integrales con la mano</p>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="btn btn-primary" id="btn-camera">Activar cámara</button>
+        <button type="button" class="btn btn-secondary" id="btn-explain">Modo explicar</button>
+        <button type="button" class="btn btn-ghost" id="btn-reset">Reiniciar</button>
+      </div>
+    </header>
+
+    <div class="status-bar">
+      <span id="gesture-chip" class="chip">Esperando gesto o botón</span>
+      <span id="status-text" class="result-note">Cargando…</span>
+    </div>
+
+    <main class="main-grid">
+      <aside class="panel side-stack">
+        <section>
+          <h2>Problema asignado</h2>
+          <dl class="kv">
+            <div>
+              <dt>Función</dt>
+              <dd class="math" id="fn-display">f(x)</dd>
+            </div>
+            <div>
+              <dt>Intervalo [a, b]</dt>
+              <dd id="interval-display">[a, b]</dd>
+            </div>
+            <div>
+              <dt>Eje de revolución</dt>
+              <dd id="axis-display">eje x</dd>
+            </div>
+          </dl>
+          <p class="result-note" id="notes-display" style="margin-top:0.6rem"></p>
+        </section>
+
+        <section>
+          <h2>Gestos (1–5)</h2>
+          <div class="gesture-grid" aria-label="Controles de gesto">
+            <button type="button" class="gesture-btn" data-mode="1"><strong>1</strong><span>Área</span></button>
+            <button type="button" class="gesture-btn" data-mode="2"><strong>2</strong><span>Vol. X</span></button>
+            <button type="button" class="gesture-btn" data-mode="3"><strong>3</strong><span>Vol. Y</span></button>
+            <button type="button" class="gesture-btn" data-mode="4"><strong>4</strong><span>Superficie</span></button>
+            <button type="button" class="gesture-btn" data-mode="5"><strong>5</strong><span>Arco</span></button>
+          </div>
+          <p class="result-note" style="margin-top:0.55rem">También puedes usar las teclas 1–5. R = reiniciar.</p>
+          <div id="explain-box" class="explain-box"></div>
+        </section>
+
+        <section>
+          <h2>Cómo usarlo</h2>
+          <ul class="instructions">
+            <li>Observa la función y el intervalo asignados.</li>
+            <li>Activa la cámara y muestra 1 a 5 dedos.</li>
+            <li>Lee la fórmula, el valor y las unidades.</li>
+            <li>Si la cámara falla, usa los botones.</li>
+          </ul>
+        </section>
+      </aside>
+
+      <section class="center-stack">
+        <div class="panel">
+          <h2>Visualización</h2>
+          <div id="plot2d" class="plot-frame"></div>
+          <div id="plot3d" class="plot-frame hidden"></div>
+        </div>
+      </section>
+
+      <aside class="panel side-stack">
+        <section>
+          <h2>Cámara</h2>
+          <div class="camera-wrap">
+            <video id="webcam" playsinline></video>
+            <canvas id="hand-canvas"></canvas>
+            <div id="camera-placeholder" class="camera-placeholder">
+              Cámara en espera.<br />Pulsa “Activar cámara”.
+            </div>
+          </div>
+        </section>
+
+        <section class="result-card">
+          <h2>Resultado</h2>
+          <div class="chip" id="result-concept">Elige un gesto o botón (1–5)</div>
+          <p id="result-title" style="font-weight:700">Sin cálculo aún</p>
+          <div class="result-formula" id="result-formula">—</div>
+          <div class="result-value" id="result-value">—</div>
+          <p class="result-note" id="result-method"></p>
+          <p class="result-note" id="result-note"></p>
+          <p class="result-note" id="result-error"></p>
+          <dl class="kv hidden" id="result-extra"></dl>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/plotly.js@2.35.2/dist/plotly.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
