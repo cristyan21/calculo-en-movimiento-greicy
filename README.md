@@ -45,4 +45,6 @@ node scripts/check-math.mjs
 
 ## Publicación
 
-GitHub Pages (remoto de desarrollo: GitHub de Crisd; luego migrar al repo colaborativo del grupo).
+- **Repo (desarrollo en GitHub de Crisd):** https://github.com/cristyan21/calculo-en-movimiento-greicy
+- **GitHub Pages:** https://cristyan21.github.io/calculo-en-movimiento-greicy/
+- Más adelante: migrar al repo colaborativo del grupo (ver [`docs/MIGRACION-GITHUB-GRUPO.md`](docs/MIGRACION-GITHUB-GRUPO.md)).
