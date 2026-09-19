@@ -1,30 +1,26 @@
 /**
- * MediaPipe Hands gesture engine with strong debounce and lock.
- * Confirms a finger count only after it stays stable; then locks until
- * the user holds a *different* count long enough (or shows a fist).
+ * MediaPipe Hands — conteo por distancia (no depende de que los dedos apunten “arriba”).
+ * Confirma el gesto tras sostenerlo; muestra siempre el conteo en vivo.
  */
 export function createGestureEngine({ onFingers, onStatus, onLandmarks }) {
   let hands = null;
   let camera = null;
   let running = false;
 
-  /** Last confirmed mode (1–5), null if unlocked */
   let lockedFingers = null;
-  /** Candidate currently being held */
   let pending = null;
   let pendingCount = 0;
-  /** Rolling votes for majority smoothing */
   const voteWindow = [];
-  const VOTE_SIZE = 9;
-  /** Frames of the same count needed to confirm / switch */
-  const CONFIRM_FRAMES = 14;
-  /** Extra frames required when switching away from a lock */
-  const SWITCH_FRAMES = 18;
-  /** Ignore tiny thumb noise: thumb must be clearly open */
-  const THUMB_OPEN_RATIO = 1.18;
+  const VOTE_SIZE = 7;
+  const CONFIRM_FRAMES = 10;
+  const SWITCH_FRAMES = 12;
 
   let lastConfirmAt = 0;
-  const COOLDOWN_MS = 700;
+  const COOLDOWN_MS = 450;
+
+  function dist(a, b) {
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  }
 
   function majorityVote(value) {
     voteWindow.push(value);
@@ -43,48 +39,66 @@ export function createGestureEngine({ onFingers, onStatus, onLandmarks }) {
   }
 
   /**
-   * Count extended fingers 0–5.
-   * Uses handedness for a more reliable thumb test.
+   * Dedo extendido si la punta está claramente más lejos del MCP que el PIP.
+   * Funciona con la mano inclinada (como en las fotos del equipo).
    */
-  function countFingers(landmarks, handednessLabel) {
+  function isFingerOpen(lm, tipIdx, pipIdx, mcpIdx, ratio = 1.12) {
+    const tip = lm[tipIdx];
+    const pip = lm[pipIdx];
+    const mcp = lm[mcpIdx];
+    const dTip = dist(mcp, tip);
+    const dPip = dist(mcp, pip);
+    if (dPip < 1e-6) return false;
+    return dTip > dPip * ratio;
+  }
+
+  /**
+   * Pulgar: punta más lejos de la base (CMC/MCP) que la articulación IP,
+   * y separada del índice (para no contarlo plegado sobre la palma).
+   */
+  function isThumbOpen(lm) {
+    const tip = lm[4];
+    const ip = lm[3];
+    const mcp = lm[2];
+    const cmc = lm[1];
+    const indexMcp = lm[5];
+    const wrist = lm[0];
+
+    const dTip = dist(cmc, tip);
+    const dIp = dist(cmc, ip);
+    const awayIndex = dist(tip, indexMcp);
+    const awayWrist = dist(tip, wrist);
+    const foldedNearPalm = awayIndex < 0.07 && dist(tip, mcp) < 0.09;
+
+    if (foldedNearPalm) return false;
+    return dTip > dIp * 1.12 && awayIndex > 0.09 && awayWrist > dist(ip, wrist) * 1.05;
+  }
+
+  function countFingers(landmarks) {
     let count = 0;
-
-    // Non-thumb fingers: tip above PIP (lower y in image coords)
-    const tips = [8, 12, 16, 20];
-    const pips = [6, 10, 14, 18];
-    for (let i = 0; i < tips.length; i++) {
-      const tip = landmarks[tips[i]];
-      const pip = landmarks[pips[i]];
-      const mcp = landmarks[pips[i] - 2];
-      // Prefer tip clearly above both PIP and MCP
-      if (tip.y < pip.y - 0.02 && tip.y < mcp.y - 0.01) count += 1;
+    // índice, medio, anular, meñique
+    const chains = [
+      [8, 6, 5],
+      [12, 10, 9],
+      [16, 14, 13],
+      [20, 18, 17],
+    ];
+    for (const [tip, pip, mcp] of chains) {
+      if (isFingerOpen(landmarks, tip, pip, mcp, 1.1)) count += 1;
     }
-
-    // Thumb: side-extension vs palm (stricter to avoid flicker)
-    const thumbTip = landmarks[4];
-    const thumbIp = landmarks[3];
-    const wrist = landmarks[0];
-    const indexMcp = landmarks[5];
-
-    const tipDist = Math.hypot(thumbTip.x - wrist.x, thumbTip.y - wrist.y);
-    const ipDist = Math.hypot(thumbIp.x - wrist.x, thumbIp.y - wrist.y);
-    const awayFromIndex = Math.hypot(thumbTip.x - indexMcp.x, thumbTip.y - indexMcp.y);
-
-    // In selfieMode, MediaPipe "Left"/"Right" is from the person's perspective
-    const label = handednessLabel || "Right";
-    let thumbSideOk = false;
-    if (label === "Right") {
-      // Right hand: extended thumb tip is to the left of IP in image (mirrored selfie)
-      thumbSideOk = thumbTip.x < thumbIp.x - 0.03;
-    } else {
-      thumbSideOk = thumbTip.x > thumbIp.x + 0.03;
-    }
-
-    const thumbOpen =
-      tipDist > ipDist * THUMB_OPEN_RATIO && awayFromIndex > 0.08 && thumbSideOk;
-    if (thumbOpen) count += 1;
-
+    if (isThumbOpen(landmarks)) count += 1;
     return Math.min(5, count);
+  }
+
+  function statusLine(live, locked) {
+    const liveTxt = `Detectando ahora: ${live}`;
+    if (locked == null) {
+      return `${liveTxt} · sostén ~1 s para confirmar`;
+    }
+    if (live === locked) {
+      return `${liveTxt} · modo fijado ${locked} · cambia de gesto o haz puño`;
+    }
+    return `${liveTxt} · cambiando de ${locked}… mantén estable`;
   }
 
   function handleResults(results) {
@@ -98,15 +112,15 @@ export function createGestureEngine({ onFingers, onStatus, onLandmarks }) {
       voteWindow.length = 0;
       onStatus?.(
         lockedFingers
-          ? `Modo fijado: ${lockedFingers} · acerca la mano para cambiar`
-          : "Sin mano — mantén solo la mano a ~40–60 cm, sin tapar la cara"
+          ? `Sin mano · modo fijado ${lockedFingers} · vuelve a mostrar la mano`
+          : "Sin mano — solo la mano, palma a la cámara, 40–60 cm"
       );
+      updateLiveChip(null);
       onLandmarks?.(null);
       return;
     }
 
     const lm = results.multiHandLandmarks[0];
-    const handLabel = results.multiHandedness?.[0]?.label || "Right";
 
     if (typeof drawConnectors !== "undefined") {
       drawConnectors(ctx, lm, HAND_CONNECTIONS, {
@@ -120,29 +134,29 @@ export function createGestureEngine({ onFingers, onStatus, onLandmarks }) {
       });
     }
 
-    const raw = countFingers(lm, handLabel);
+    const raw = countFingers(lm);
     const fingers = majorityVote(raw);
+    updateLiveChip(fingers);
     onLandmarks?.(lm);
 
     const now = performance.now();
     const inCooldown = now - lastConfirmAt < COOLDOWN_MS;
 
-    // Fist (0) unlocks so the next count can confirm cleanly
+    // Puño libera el modo
     if (fingers === 0) {
       if (lockedFingers != null) {
         lockedFingers = null;
-        onStatus?.("Puño detectado — modo liberado. Ahora muestra 1–5 y sostén");
+        onStatus?.("Puño — modo liberado. Muestra 1–5 y sostén");
       } else {
-        onStatus?.("Puño · abre 1–5 dedos y sostén 1 segundo");
+        onStatus?.("Puño · abre 1–5 dedos y sostén");
       }
       pending = 0;
       pendingCount = 0;
       return;
     }
 
-    if (fingers === pending) {
-      pendingCount += 1;
-    } else {
+    if (fingers === pending) pendingCount += 1;
+    else {
       pending = fingers;
       pendingCount = 1;
     }
@@ -162,25 +176,23 @@ export function createGestureEngine({ onFingers, onStatus, onLandmarks }) {
       lastConfirmAt = now;
       pendingCount = 0;
       onFingers?.(fingers);
-      onStatus?.(`Confirmado: ${fingers} dedo${fingers === 1 ? "" : "s"} (modo fijado)`);
+      onStatus?.(`Confirmado: ${fingers} dedo${fingers === 1 ? "" : "s"}`);
       return;
     }
 
-    if (lockedFingers != null && fingers === lockedFingers) {
-      onStatus?.(`Modo fijado: ${lockedFingers} · para cambiar, sostén otro gesto ~1 s (o puño)`);
-    } else if (lockedFingers != null) {
-      const left = Math.max(0, need - pendingCount);
-      onStatus?.(
-        `Viendo ${fingers}… mantén estable (${left} frames) para cambiar de ${lockedFingers}`
-      );
-    } else {
-      const left = Math.max(0, need - pendingCount);
-      onStatus?.(
-        left > 0
-          ? `Viendo ${fingers} dedo${fingers === 1 ? "" : "s"}… sostén (~${left})`
-          : `Viendo ${fingers} dedo${fingers === 1 ? "" : "s"}`
-      );
+    onStatus?.(statusLine(fingers, lockedFingers));
+  }
+
+  function updateLiveChip(n) {
+    const el = document.getElementById("live-fingers");
+    if (!el) return;
+    if (n == null) {
+      el.textContent = "Dedos en vivo: —";
+      el.classList.remove("ok");
+      return;
     }
+    el.textContent = `Dedos en vivo: ${n}`;
+    el.classList.add("ok");
   }
 
   async function start(videoEl) {
@@ -193,8 +205,8 @@ export function createGestureEngine({ onFingers, onStatus, onLandmarks }) {
     hands.setOptions({
       maxNumHands: 1,
       modelComplexity: 1,
-      minDetectionConfidence: 0.7,
-      minTrackingConfidence: 0.7,
+      minDetectionConfidence: 0.6,
+      minTrackingConfidence: 0.6,
       selfieMode: true,
     });
     hands.onResults(handleResults);
@@ -219,7 +231,7 @@ export function createGestureEngine({ onFingers, onStatus, onLandmarks }) {
       await camera.start();
       running = true;
       document.getElementById("camera-placeholder")?.classList.add("hidden");
-      onStatus?.("Cámara activa — muestra 1–5 y sostén 1 segundo");
+      onStatus?.("Cámara activa — mira “Dedos en vivo” y sostén el gesto");
     } catch (err) {
       running = false;
       onStatus?.("No se pudo acceder a la cámara. Usa los botones 1–5.");
@@ -243,6 +255,7 @@ export function createGestureEngine({ onFingers, onStatus, onLandmarks }) {
     pendingCount = 0;
     voteWindow.length = 0;
     lastConfirmAt = 0;
+    updateLiveChip(null);
   }
 
   return { start, stop, resetStability, isRunning: () => running };
