@@ -1,26 +1,28 @@
 /**
- * MediaPipe Hands — conteo por distancia (no depende de que los dedos apunten “arriba”).
- * Confirma el gesto tras sostenerlo; muestra siempre el conteo en vivo.
+ * Gesture model (equipo Greicy):
+ * - Mano derecha, palma a la cámara, dedos hacia arriba
+ * - Conteo tipo demo profesora: tip.y < pip.y (sin pulgar en 1–4)
+ * - 5 = 4 dedos largos + pulgar abierto
+ * - Flujo: gesto N → confirmar 1.5s → fijar → SOLO puño libera → gesto M
  */
 export function createGestureEngine({ onFingers, onStatus, onLandmarks }) {
   let hands = null;
   let camera = null;
   let running = false;
 
+  /** @type {null | number} modo confirmado 1–5 */
   let lockedFingers = null;
+  /** true solo después de puño (o al inicio) — permite confirmar un gesto */
+  let unlocked = true;
+
   let pending = null;
-  let pendingCount = 0;
+  let pendingSince = 0;
   const voteWindow = [];
-  const VOTE_SIZE = 7;
-  const CONFIRM_FRAMES = 10;
-  const SWITCH_FRAMES = 12;
+  const VOTE_SIZE = 5;
 
-  let lastConfirmAt = 0;
-  const COOLDOWN_MS = 450;
-
-  function dist(a, b) {
-    return Math.hypot(a.x - b.x, a.y - b.y);
-  }
+  const CONFIRM_MS = 1500;
+  const FIST_MS = 400;
+  let fistSince = 0;
 
   function majorityVote(value) {
     voteWindow.push(value);
@@ -38,67 +40,47 @@ export function createGestureEngine({ onFingers, onStatus, onLandmarks }) {
     return best;
   }
 
-  /**
-   * Dedo extendido si la punta está claramente más lejos del MCP que el PIP.
-   * Funciona con la mano inclinada (como en las fotos del equipo).
-   */
-  function isFingerOpen(lm, tipIdx, pipIdx, mcpIdx, ratio = 1.12) {
-    const tip = lm[tipIdx];
-    const pip = lm[pipIdx];
-    const mcp = lm[mcpIdx];
-    const dTip = dist(mcp, tip);
-    const dPip = dist(mcp, pip);
-    if (dPip < 1e-6) return false;
-    return dTip > dPip * ratio;
+  function dist(a, b) {
+    return Math.hypot(a.x - b.x, a.y - b.y);
   }
 
   /**
-   * Pulgar: punta más lejos de la base (CMC/MCP) que la articulación IP,
-   * y separada del índice (para no contarlo plegado sobre la palma).
+   * Conteo estilo profesora + pulgar solo para el 5.
+   * Retorna 0–5.
    */
-  function isThumbOpen(lm) {
+  function countFingers(lm) {
+    // 4 dedos largos (igual que el demo de la profesora)
+    let longFingers = 0;
+    const tips = [8, 12, 16, 20];
+    const pips = [6, 10, 14, 18];
+    for (let i = 0; i < 4; i++) {
+      if (lm[tips[i]].y < lm[pips[i]].y) longFingers += 1;
+    }
+
+    // Pulgar abierto (solo importa para llegar a 5)
     const tip = lm[4];
     const ip = lm[3];
-    const mcp = lm[2];
-    const cmc = lm[1];
     const indexMcp = lm[5];
-    const wrist = lm[0];
+    const thumbOpen =
+      tip.x < ip.x - 0.03 && // mano derecha, selfieMode: pulgar hacia afuera
+      dist(tip, indexMcp) > 0.08;
 
-    const dTip = dist(cmc, tip);
-    const dIp = dist(cmc, ip);
-    const awayIndex = dist(tip, indexMcp);
-    const awayWrist = dist(tip, wrist);
-    const foldedNearPalm = awayIndex < 0.07 && dist(tip, mcp) < 0.09;
-
-    if (foldedNearPalm) return false;
-    return dTip > dIp * 1.12 && awayIndex > 0.09 && awayWrist > dist(ip, wrist) * 1.05;
+    if (longFingers === 0) return 0; // puño (pulgar ignorado)
+    if (longFingers === 4 && thumbOpen) return 5;
+    // 1–4: pulgar ignorado a propósito
+    return longFingers;
   }
 
-  function countFingers(landmarks) {
-    let count = 0;
-    // índice, medio, anular, meñique
-    const chains = [
-      [8, 6, 5],
-      [12, 10, 9],
-      [16, 14, 13],
-      [20, 18, 17],
-    ];
-    for (const [tip, pip, mcp] of chains) {
-      if (isFingerOpen(landmarks, tip, pip, mcp, 1.1)) count += 1;
+  function updateLiveChip(n) {
+    const el = document.getElementById("live-fingers");
+    if (!el) return;
+    if (n == null) {
+      el.textContent = "Dedos en vivo: —";
+      el.classList.remove("ok");
+      return;
     }
-    if (isThumbOpen(landmarks)) count += 1;
-    return Math.min(5, count);
-  }
-
-  function statusLine(live, locked) {
-    const liveTxt = `Detectando ahora: ${live}`;
-    if (locked == null) {
-      return `${liveTxt} · sostén ~1 s para confirmar`;
-    }
-    if (live === locked) {
-      return `${liveTxt} · modo fijado ${locked} · cambia de gesto o haz puño`;
-    }
-    return `${liveTxt} · cambiando de ${locked}… mantén estable`;
+    el.textContent = `Dedos en vivo: ${n}`;
+    el.classList.add("ok");
   }
 
   function handleResults(results) {
@@ -108,19 +90,35 @@ export function createGestureEngine({ onFingers, onStatus, onLandmarks }) {
 
     if (!results.multiHandLandmarks?.length) {
       pending = null;
-      pendingCount = 0;
+      pendingSince = 0;
+      fistSince = 0;
       voteWindow.length = 0;
+      updateLiveChip(null);
       onStatus?.(
         lockedFingers
-          ? `Sin mano · modo fijado ${lockedFingers} · vuelve a mostrar la mano`
-          : "Sin mano — solo la mano, palma a la cámara, 40–60 cm"
+          ? `Sin mano · modo ${lockedFingers} fijado · haz puño frente a la cámara para cambiar`
+          : "Sin mano — mano DERECHA, palma a la cámara, dedos arriba"
       );
-      updateLiveChip(null);
       onLandmarks?.(null);
       return;
     }
 
-    const lm = results.multiHandLandmarks[0];
+    // Preferir mano derecha (como acordamos)
+    let lm = null;
+    let label = "Right";
+    for (let i = 0; i < results.multiHandLandmarks.length; i++) {
+      const handLabel = results.multiHandedness?.[i]?.label || "Right";
+      if (handLabel === "Right") {
+        lm = results.multiHandLandmarks[i];
+        label = handLabel;
+        break;
+      }
+    }
+    // Si solo hay izquierda, usarla pero avisar
+    if (!lm) {
+      lm = results.multiHandLandmarks[0];
+      label = results.multiHandedness?.[0]?.label || "Left";
+    }
 
     if (typeof drawConnectors !== "undefined") {
       drawConnectors(ctx, lm, HAND_CONNECTIONS, {
@@ -140,59 +138,67 @@ export function createGestureEngine({ onFingers, onStatus, onLandmarks }) {
     onLandmarks?.(lm);
 
     const now = performance.now();
-    const inCooldown = now - lastConfirmAt < COOLDOWN_MS;
 
-    // Puño libera el modo
+    if (label !== "Right") {
+      onStatus?.("Usa la mano DERECHA (palma a la cámara)");
+      return;
+    }
+
+    // —— PUÑO: única forma de liberar ——
     if (fingers === 0) {
-      if (lockedFingers != null) {
-        lockedFingers = null;
-        onStatus?.("Puño — modo liberado. Muestra 1–5 y sostén");
+      pending = null;
+      pendingSince = 0;
+      if (fistSince === 0) fistSince = now;
+      const held = now - fistSince;
+      if (held >= FIST_MS) {
+        if (lockedFingers != null || !unlocked) {
+          lockedFingers = null;
+          unlocked = true;
+          onStatus?.("Puño OK — modo liberado. Ahora muestra 1–5 y sostén 1.5 s");
+        } else {
+          onStatus?.("Puño · abre 1–5 dedos (palma a la cámara) y sostén 1.5 s");
+        }
       } else {
-        onStatus?.("Puño · abre 1–5 dedos y sostén");
+        onStatus?.("Detectando puño…");
       }
-      pending = 0;
-      pendingCount = 0;
       return;
     }
 
-    if (fingers === pending) pendingCount += 1;
-    else {
+    fistSince = 0;
+
+    // —— Modo fijado: ignorar otros gestos hasta puño ——
+    if (lockedFingers != null && !unlocked) {
+      onStatus?.(
+        `Modo fijado: ${lockedFingers} · para cambiar haz PUÑO y luego el nuevo gesto`
+      );
+      return;
+    }
+
+    // —— Esperando confirmación de un gesto 1–5 ——
+    if (fingers === pending) {
+      // keep pendingSince
+    } else {
       pending = fingers;
-      pendingCount = 1;
+      pendingSince = now;
     }
 
-    const need =
-      lockedFingers != null && fingers !== lockedFingers ? SWITCH_FRAMES : CONFIRM_FRAMES;
+    const heldMs = now - pendingSince;
+    const leftSec = Math.max(0, (CONFIRM_MS - heldMs) / 1000);
 
-    const canConfirm =
-      !inCooldown &&
-      pendingCount >= need &&
-      fingers >= 1 &&
-      fingers <= 5 &&
-      fingers !== lockedFingers;
-
-    if (canConfirm) {
+    if (heldMs >= CONFIRM_MS && fingers >= 1 && fingers <= 5) {
       lockedFingers = fingers;
-      lastConfirmAt = now;
-      pendingCount = 0;
+      unlocked = false;
+      pending = null;
+      pendingSince = 0;
       onFingers?.(fingers);
-      onStatus?.(`Confirmado: ${fingers} dedo${fingers === 1 ? "" : "s"}`);
+      onStatus?.(`Confirmado: ${fingers} dedo${fingers === 1 ? "" : "s"} · haz puño para cambiar`);
       return;
     }
 
-    onStatus?.(statusLine(fingers, lockedFingers));
-  }
-
-  function updateLiveChip(n) {
-    const el = document.getElementById("live-fingers");
-    if (!el) return;
-    if (n == null) {
-      el.textContent = "Dedos en vivo: —";
-      el.classList.remove("ok");
-      return;
-    }
-    el.textContent = `Dedos en vivo: ${n}`;
-    el.classList.add("ok");
+    onStatus?.(
+      `Viendo ${fingers} · sostén ${leftSec.toFixed(1)} s para confirmar` +
+        (lockedFingers == null && unlocked ? "" : "")
+    );
   }
 
   async function start(videoEl) {
@@ -205,8 +211,8 @@ export function createGestureEngine({ onFingers, onStatus, onLandmarks }) {
     hands.setOptions({
       maxNumHands: 1,
       modelComplexity: 1,
-      minDetectionConfidence: 0.6,
-      minTrackingConfidence: 0.6,
+      minDetectionConfidence: 0.65,
+      minTrackingConfidence: 0.65,
       selfieMode: true,
     });
     hands.onResults(handleResults);
@@ -231,10 +237,10 @@ export function createGestureEngine({ onFingers, onStatus, onLandmarks }) {
       await camera.start();
       running = true;
       document.getElementById("camera-placeholder")?.classList.add("hidden");
-      onStatus?.("Cámara activa — mira “Dedos en vivo” y sostén el gesto");
+      onStatus?.("Cámara OK — mano derecha, palma a la cámara · gesto → puño → gesto");
     } catch (err) {
       running = false;
-      onStatus?.("No se pudo acceder a la cámara. Usa los botones 1–5.");
+      onStatus?.("Sin cámara — usa los botones 1–5");
       throw err;
     }
   }
@@ -251,10 +257,11 @@ export function createGestureEngine({ onFingers, onStatus, onLandmarks }) {
 
   function resetStability() {
     lockedFingers = null;
+    unlocked = true;
     pending = null;
-    pendingCount = 0;
+    pendingSince = 0;
+    fistSince = 0;
     voteWindow.length = 0;
-    lastConfirmAt = 0;
     updateLiveChip(null);
   }
 

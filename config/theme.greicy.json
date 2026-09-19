@@ -4,7 +4,7 @@
   "tagline": "Explora integrales con la mano: área, volumen, superficie y arco",
   "team": ["Greicy Martinez", "Mariana Quiroga", "Miluska Mancera"],
   "welcomeTitle": "Bienvenida",
-  "welcomeBody": "Equipo: Greicy Martinez, Mariana Quiroga y Miluska Mancera. Activa la cámara o usa los botones 1–5. Cada gesto calcula un concepto de cálculo integral sobre la función que asigne la docente.",
+  "welcomeBody": "Equipo: Greicy Martinez, Mariana Quiroga y Miluska Mancera. Mano derecha, palma a la cámara: muestra un gesto 1.5 s, haz puño para cambiar, luego el siguiente. También puedes usar los botones 1–5.",
   "layout": "split",
   "vizStyle": "clean",
   "fonts": {
