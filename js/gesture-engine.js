@@ -1,9 +1,11 @@
 /**
- * Gesture model (equipo Greicy):
- * - Mano derecha, palma a la cámara, dedos hacia arriba
- * - Conteo tipo demo profesora: tip.y < pip.y (sin pulgar en 1–4)
- * - 5 = 4 dedos largos + pulgar abierto
- * - Flujo: gesto N → confirmar 1.5s → fijar → SOLO puño libera → gesto M
+ * ARCHIVO: js/gesture-engine.js
+ * QUÉ ES: Reconocimiento de mano y conteo de dedos (MediaPipe).
+ * PARA EXPLICAR: Activa la cámara, dibuja el esqueleto de la mano y cuenta dedos.
+ * Flujo pedagógico acordado: mostrar gesto → sostener 1.5 s → modo fijado →
+ * PUÑO para liberar → otro gesto. Mano derecha, palma a la cámara.
+ * En 1–4 se ignora el pulgar; el 5 requiere los cuatro dedos largos + pulgar.
+ * Si la cámara falla, la app sigue con botones 1–5 (mismo resultado matemático).
  */
 export function createGestureEngine({ onFingers, onStatus, onLandmarks }) {
   let hands = null;

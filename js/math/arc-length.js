@@ -1,9 +1,13 @@
+/**
+ * ARCHIVO: js/math/arc-length.js
+ * QUÉ ES: Cálculo del gesto 5 — longitud de arco.
+ * PARA EXPLICAR: Mide cuánto “mide” la curva entre a y b:
+ *   L = ∫_a^b √(1+[f'(x)]²) dx
+ * Concepto geométrico distinto del área: no sombrea región, recorre la curva.
+ */
 import { simpson } from "./integrate.js";
 import { derivative } from "./parser.js";
 
-/**
- * Arc length L = ∫_a^b √(1+[f'(x)]²) dx
- */
 export function computeArcLength(f, a, b, n = 800) {
   const integrand = (x) => {
     const dy = derivative(f, x);

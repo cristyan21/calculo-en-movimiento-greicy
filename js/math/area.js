@@ -1,9 +1,13 @@
+/**
+ * ARCHIVO: js/math/area.js
+ * QUÉ ES: Cálculo del gesto 1 — área bajo la curva.
+ * PARA EXPLICAR: Obtiene la integral definida (con signo) ∫_a^b f(x) dx y el
+ * área geométrica (suma de |∫| en cada tramo si hay raíces). Cumple el aviso
+ * de la guía: distinguir integral con signo vs área total positiva.
+ */
 import { simpson } from "./integrate.js";
 import { findRoots } from "./roots.js";
 
-/**
- * Signed definite integral and geometric area (sum of absolute pieces).
- */
 export function computeArea(f, a, b, n = 800) {
   const signed = simpson(f, a, b, n);
   const roots = findRoots(f, a, b);

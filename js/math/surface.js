@@ -1,12 +1,14 @@
+/**
+ * ARCHIVO: js/math/surface.js
+ * QUÉ ES: Cálculo del gesto 4 — área superficial de revolución.
+ * PARA EXPLICAR: Integra la “cáscara” al girar la curva.
+ *   Eje x: S = 2π ∫ |f(x)| √(1+[f'(x)]²) dx
+ *   Eje y: S = 2π ∫ |x| √(1+[f'(x)]²) dx
+ * Usa la derivada numérica de parser.js + Simpson.
+ */
 import { simpson } from "./integrate.js";
 import { derivative } from "./parser.js";
 
-/**
- * Surface area of revolution about assigned axis.
- * About x: S = 2π ∫ |f(x)| √(1+[f'(x)]²) dx
- * About y (approx via x as function of parameter): S = 2π ∫ |x| √(1+[f'(x)]²) dx
- *   (common parametric form when revolving about y with x as radius)
- */
 export function computeSurface(f, a, b, axis = "x", n = 800) {
   const ax = axis === "y" ? "y" : "x";
 

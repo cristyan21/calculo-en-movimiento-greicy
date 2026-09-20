@@ -1,3 +1,10 @@
+/**
+ * ARCHIVO: css/tokens.css
+ * QUÉ ES: Variables de diseño (colores, tipografías, radios).
+ * PARA EXPLICAR: Define la identidad visual del equipo (rosa, lavanda, crema).
+ * Otros grupos pueden cambiar el tema JSON y estas variables se actualizan
+ * desde config-loader sin tocar la matemática.
+ */
 :root {
   --bg: #faf6f8;
   --bg-soft: #fff7fb;

@@ -1,3 +1,11 @@
+/**
+ * ARCHIVO: js/math/index.js
+ * QUÉ ES: Puerta de entrada del motor matemático.
+ * PARA EXPLICAR: Relaciona cada número de dedos (1–5) con su cálculo:
+ *   1 área, 2 volumen eje x, 3 volumen eje y, 4 superficie, 5 arco.
+ * runMode() es lo que llama la app al confirmar un gesto o botón.
+ * sampleCurve() prepara puntos para dibujar f(x) en 2D/3D.
+ */
 import { compileFunction } from "./parser.js";
 import { computeArea } from "./area.js";
 import { computeVolume } from "./volume.js";
@@ -12,9 +20,6 @@ export const MODES = {
   5: { id: "arc", label: "Arco", short: "Longitud de arco" },
 };
 
-/**
- * Run the calculation for finger/mode 1..5
- */
 export function runMode(mode, assignment) {
   const f = compileFunction(assignment.functionExpression);
   const a = Number(assignment.interval.a);

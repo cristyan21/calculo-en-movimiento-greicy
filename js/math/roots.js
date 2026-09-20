@@ -1,5 +1,9 @@
 /**
- * Find roots of f in [a,b] by sign-change scan + bisection.
+ * ARCHIVO: js/math/roots.js
+ * QUÉ ES: Busca dónde f(x) = 0 dentro de [a, b].
+ * PARA EXPLICAR: Si la curva cruza el eje x, el área geométrica no es solo la
+ * integral con signo: hay que partir el intervalo en las raíces y sumar |∫|.
+ * Usa cambios de signo + bisección. Sirve al gesto de 1 dedo (área).
  */
 export function findRoots(f, a, b, samples = 400, tol = 1e-8) {
   const roots = [];

@@ -1,3 +1,10 @@
+/**
+ * ARCHIVO: js/config-loader.js
+ * QUÉ ES: Carga la configuración del proyecto desde archivos JSON.
+ * PARA EXPLICAR: Lee assignment.json (función, [a,b], eje) y el tema visual
+ * (colores, nombres del equipo). Así el mismo software sirve a varios grupos
+ * cambiando solo la configuración, sin reescribir la matemática.
+ */
 export async function loadConfig() {
   const appRes = await fetch("config/app.json");
   if (!appRes.ok) throw new Error("No se pudo cargar config/app.json");

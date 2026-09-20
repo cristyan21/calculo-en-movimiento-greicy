@@ -1,3 +1,11 @@
+/**
+ * ARCHIVO: js/main.js
+ * QUÉ ES: “Cerebro” o coordinador de la aplicación.
+ * PARA EXPLICAR: Arranca el programa, carga el problema y el tema visual, conecta
+ * la cámara/gestos con los cálculos y las gráficas. Cuando eliges un gesto (1–5)
+ * o un botón, aquí se pide el resultado matemático y se actualiza la pantalla.
+ * También permite aplicar una nueva función el día de la entrega y reiniciar.
+ */
 import { loadConfig, applyTheme } from "./config-loader.js";
 import { runMode, MODES, sampleCurve } from "./math/index.js";
 import { runMathChecks } from "./math/__checks.js";

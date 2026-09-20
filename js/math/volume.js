@@ -1,10 +1,13 @@
+/**
+ * ARCHIVO: js/math/volume.js
+ * QUÉ ES: Cálculo de los gestos 2 y 3 — volúmenes de revolución.
+ * PARA EXPLICAR:
+ *   • Eje x (2 dedos): método de discos  V = π ∫_a^b [f(x)]² dx
+ *   • Eje y (3 dedos): capas cilíndricas V = 2π ∫_a^b x f(x) dx
+ * El número lo da Simpson; la figura 3D solo ilustra el sólido.
+ */
 import { simpson } from "./integrate.js";
 
-/**
- * Volume of solid of revolution.
- * axis "x": disks V = π ∫ [f(x)]^2 dx
- * axis "y": cylindrical shells V = 2π ∫ x f(x) dx  (assumes f(x)≥0 on [a,b], a≥0 preferred)
- */
 export function computeVolume(f, a, b, axis = "x", n = 800) {
   const ax = axis === "y" ? "y" : "x";
 

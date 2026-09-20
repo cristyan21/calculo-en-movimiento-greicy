@@ -1,3 +1,9 @@
+/**
+ * ARCHIVO: css/layout.css
+ * QUÉ ES: Distribución de la página (header, 3 columnas, gráfica, cámara).
+ * PARA EXPLICAR: Organiza el espacio: problema a la izquierda, visualización
+ * al centro, cámara y resultado a la derecha. Incluye estilos del contenedor 3D.
+ */
 .app-shell {
   max-width: 1280px;
   margin: 0 auto;

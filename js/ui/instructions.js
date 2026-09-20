@@ -1,3 +1,9 @@
+/**
+ * ARCHIVO: js/ui/instructions.js
+ * QUÉ ES: Textos del “Modo explicar” (un párrafo por gesto).
+ * PARA EXPLICAR: Al activar el botón, aparece un resumen oral de qué integral
+ * corresponde a 1–5 dedos. Sirve de guion rápido durante la demo.
+ */
 const EXPLAIN = {
   1: "Con 1 dedo calculamos el área. Mostramos la integral definida (con signo) y, si la curva cruza el eje x, el área geométrica sumando las partes positivas.",
   2: "Con 2 dedos giramos la región alrededor del eje x y calculamos el volumen por discos: V = π ∫ [f(x)]² dx.",

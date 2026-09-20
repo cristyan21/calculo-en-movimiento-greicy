@@ -1,3 +1,10 @@
+/**
+ * ARCHIVO: js/viz/plot-2d.js
+ * QUÉ ES: Gráficas 2D con Plotly (gestos 1 área y 5 arco) y conmutador 2D/3D.
+ * PARA EXPLICAR: Dibuja f(x) en [a,b], sombrea el área o resalta el arco.
+ * Si el gesto es 2, 3 o 4, pasa a las partículas 3D (solid-particles.js).
+ * La gráfica ayuda a “ver” el concepto; el número sale del motor matemático.
+ */
 import { sampleCurve } from "../math/index.js";
 import { showParticleSolid, hideParticleSolid } from "./solid-particles.js";
 

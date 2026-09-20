@@ -1,11 +1,15 @@
+/**
+ * ARCHIVO: js/viz/solid-particles.js
+ * QUÉ ES: Sólido 3D con partículas (Three.js), gestos 2–4.
+ * PARA EXPLICAR: Inspirado en el demo de la profesora, pero usando la función
+ * asignada f(x) en [a,b]. Las partículas ilustran el volumen o la superficie;
+ * NO calculan la integral (eso lo hace Simpson). Incluye ejes suaves tipo
+ * marca de agua y rotación automática para apreciar el sólido.
+ */
 import { sampleCurve } from "../math/index.js";
 
-/**
- * Three.js particle solid of revolution — inspired by the professor demo,
- * driven by the assigned f(x) and [a,b], Greicy palette.
- */
 const N = 14000;
-const ROT_SPEED = 0.014; // un poco más rápido que antes (0.006)
+const ROT_SPEED = 0.014;
 
 let ready = false;
 let scene, camera, renderer, points, geo, mat;

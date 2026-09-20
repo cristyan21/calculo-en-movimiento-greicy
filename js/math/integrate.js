@@ -1,6 +1,10 @@
 /**
- * Composite Simpson's rule with even n.
- * Returns { value, estimateError } using n and 2n comparison when possible.
+ * ARCHIVO: js/math/integrate.js
+ * QUÉ ES: Motor de integración numérica (regla de Simpson compuesta).
+ * PARA EXPLICAR: Calcula ∫_a^b g(x) dx con muchos subintervalos. Compara n y 2n
+ * para estimar el error. Todas las fórmulas del proyecto (área, volumen, etc.)
+ * pasan por aquí; por eso los resultados son precisos aunque f(x) no tenga
+ * antiderivada fácil a mano.
  */
 export function simpson(f, a, b, n = 800) {
   if (!(b > a)) throw new Error("El intervalo [a, b] debe cumplir b > a.");

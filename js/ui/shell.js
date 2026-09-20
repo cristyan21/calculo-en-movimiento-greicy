@@ -1,3 +1,10 @@
+/**
+ * ARCHIVO: js/ui/shell.js
+ * QUÉ ES: Enlace entre la interfaz HTML y la lógica (botones, formulario, teclado).
+ * PARA EXPLICAR: Rellena nombres del equipo, el formulario del problema asignado
+ * (función, a, b, eje) y escucha clics/teclas 1–5. Guarda el problema en el
+ * navegador para el día de la entrega. No calcula integrales: solo orquesta la UI.
+ */
 import { MODES } from "../math/index.js";
 
 const STORAGE_KEY = "cim-assignment-v1";

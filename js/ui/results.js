@@ -1,3 +1,10 @@
+/**
+ * ARCHIVO: js/ui/results.js
+ * QUÉ ES: Panel de “Resultado” (fórmula, valor, unidades, notas).
+ * PARA EXPLICAR: Muestra lo que la profesora quiere ver: concepto, integral,
+ * número con unidades y, en el área, integral con signo vs área geométrica.
+ * Es la parte más importante para la exposición de cálculo.
+ */
 function formatNumber(value) {
   if (!Number.isFinite(value)) return "—";
   const abs = Math.abs(value);

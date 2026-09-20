@@ -1,3 +1,11 @@
+/**
+ * ARCHIVO: js/math/__checks.js
+ * QUÉ ES: Autopruebas con integrales conocidas (verificación de precisión).
+ * PARA EXPLICAR: Antes de la demo, el programa comprueba casos como
+ * ∫_0^2 x² dx = 8/3 o la longitud de y=x en [0,1] = √2. Si pasan,
+ * confían en que Simpson y las fórmulas están bien implementadas.
+ * Se ejecutan en consola al abrir la app (F12) o con: npm run check:math
+ */
 import { compileFunction } from "./parser.js";
 import { computeArea } from "./area.js";
 import { computeVolume } from "./volume.js";
@@ -8,9 +16,6 @@ function nearly(actual, expected, tol = 1e-3) {
   return Math.abs(actual - expected) <= tol;
 }
 
-/**
- * Self-checks with known integrals (for console / diagnostics).
- */
 export function runMathChecks() {
   const results = [];
 

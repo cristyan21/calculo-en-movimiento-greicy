@@ -1,7 +1,10 @@
 /**
- * Safe expression parser for f(x).
- * Supports +, -, *, /, ^, parentheses, and math functions:
- * sin, cos, tan, asin, acos, atan, exp, log, ln, sqrt, abs, pi, e
+ * ARCHIVO: js/math/parser.js
+ * QUÉ ES: Interpreta la fórmula escrita de f(x) (ej. "x^2", "sin(x)").
+ * PARA EXPLICAR: Convierte el texto que asigna la docente en una función
+ * numérica que el resto del programa puede evaluar. También estima f'(x)
+ * con diferencia centrada (necesaria para superficie y longitud de arco).
+ * Soporta +, -, *, /, ^ y funciones como sin, cos, exp, log, sqrt, etc.
  */
 export function compileFunction(expression) {
   const raw = String(expression || "").trim();
@@ -41,7 +44,6 @@ export function compileFunction(expression) {
     `
   );
 
-  // Smoke test
   const sample = fn(0.5);
   if (!Number.isFinite(sample) && sample !== Infinity && sample !== -Infinity) {
     // Allow non-finite at 0.5 only if expression is otherwise valid; still wrap
